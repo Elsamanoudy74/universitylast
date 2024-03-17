@@ -1,21 +1,24 @@
+import RegisterModel from "../../DB/models/Register.model.js";
+import {StudentGradeModel} from "../../DB/models/StudentGrades.model.js";
 import CourseModel from "../../DB/models/course.model.js";
-import studentExamModel from "../../DB/models/studentExams.model.js";
 
 export const createStudentExams = async (userId) => {
-  console.log(userId);
   try {
     if (!userId) {
       throw new Error("User Id not sent");
     }
 
-    const addstudentExams = {
-      StudentId: userId,
-      CoursesExamed: [],
-      TotalGpa: 0,
+    const newUserGrades = {
+      studentId: userId,
+      TotalGpa: 2,
+      totalCreditHours: 0,
+      GradeInsemster: [],
     };
-    const result = await studentExamModel.create(addstudentExams);
+    // create student grates
+    const result = await StudentGradeModel.create(newUserGrades);
+
     if (!result) {
-      throw new Error("Failed to create student exams");
+      throw new Error("Failed to create student");
     }
     return result;
   } catch (error) {
@@ -23,11 +26,23 @@ export const createStudentExams = async (userId) => {
   }
 };
 
-export const getAllValidCourses = async (passedCoursesIds) => {
-  console.log(passedCoursesIds);
+export const getAllValidCourses = async (passedCoursesIds, userId) => {
+  // delete courses its already user register it
+  const Registered = await RegisterModel.findOne({ studentId: userId });
+  let newpassedCoursesIds = passedCoursesIds;
+  if (Registered) {
+    const coursesRegisterd = Registered.coursesRegisterd;
+    newpassedCoursesIds = Array.from(
+      new Set(passedCoursesIds.concat(coursesRegisterd))
+    );
+  }
+
   const newCourses = await CourseModel.find({
-    _id: { $nin: passedCoursesIds },
+    _id: { $nin: newpassedCoursesIds },
+    OpenForRegistration: true,
   });
+
+  // filter only vaild courses
   const validCourses = newCourses.filter((course) => {
     if (!course?.Prerequisites || course.Prerequisites.length === 0) {
       return true;
