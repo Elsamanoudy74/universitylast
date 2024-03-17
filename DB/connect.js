@@ -1,8 +1,5 @@
 import mongoose from "mongoose";
 
-// تعيين الخيار strictQuery إلى false لتجنب التحذير
-mongoose.set("strictQuery", false);
-
 // دالة للاتصال بقاعدة البيانات
 const connectDB = async () => {
   try {
